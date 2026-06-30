@@ -85,25 +85,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// diberikan SEBELUM service jalan — sesuai requirement
   /// "Android Permissions Wajib ditangani secara runtime".
   Future<void> _handleStartSession() async {
+    await DebugLogger.clear();
     try {
-      // KRITIS: startService() dipanggil PALING PERTAMA, SEGERA
-      // setelah tap tombol — TANPA await dialog permission apapun
-      // sebelumnya. Alasan: Android (terutama MIUI/HyperOS) hanya
-      // memberi window waktu singkat setelah user-gesture untuk
-      // mengizinkan startForegroundService() dari konteks yang
-      // dianggap sah. Setiap dialog permission yang di-await
-      // berurutan menggerus window itu — begitu window habis,
-      // OS bisa langsung MEMATIKAN seluruh proses app tanpa
-      // exception yang bisa ditangkap try-catch. Maka service
-      // HARUS start duluan, baru permission diminta belakangan.
-      _debugLog('1. Memulai service...');
-      final isRunning = await _service.isRunning();
-      if (!isRunning) {
-        await _service.startService();
-        _debugLog('2. startService() dipanggil');
-      }
-
-      _debugLog('3. Minta izin lokasi foreground...');
+      // KRITIS (Android 14+/15): location permission HARUS sudah
+      // granted SEBELUM startForeground() dipanggil dengan
+      // foregroundServiceType="location" — kalau belum, sistem
+      // melempar SecurityException di level NATIVE yang mematikan
+      // seluruh proses app, TIDAK bisa ditangkap try-catch Dart.
+      // Maka permission lokasi WAJIB diminta duluan, baru startService().
+      _debugLog('1. Minta izin lokasi foreground...');
       final foreground =
           await AppPermissionHandler.requestForegroundLocation();
       if (!mounted) return;
@@ -111,9 +101,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _showPermissionDeniedMessage('Lokasi');
         return;
       }
-      _debugLog('4. Lokasi foreground: GRANTED');
+      _debugLog('2. Lokasi foreground: GRANTED');
 
-      _debugLog('5. Minta izin lokasi background...');
+      _debugLog('3. Minta izin lokasi background...');
       final background =
           await AppPermissionHandler.requestBackgroundLocation();
       if (!mounted) return;
@@ -121,16 +111,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _showPermissionDeniedMessage('Lokasi Latar Belakang');
         return;
       }
-      _debugLog('6. Lokasi background: GRANTED');
+      _debugLog('4. Lokasi background: GRANTED');
 
-      _debugLog('7. Minta izin notifikasi...');
+      _debugLog('5. Minta izin notifikasi...');
       final notif =
           await AppPermissionHandler.requestNotificationPermission();
       if (!mounted) return;
-      _debugLog('8. Notifikasi: ${notif.name}');
+      _debugLog('6. Notifikasi: ${notif.name}');
       if (notif != PermissionResult.granted) {
         _showPermissionDeniedMessage('Notifikasi (WAJIB untuk cockpit!)');
         return;
+      }
+
+      // Sekarang location permission SUDAH granted — aman memanggil
+      // startService(), startForeground(type:location) tidak akan
+      // di-reject sistem.
+      _debugLog('7. Memulai service...');
+      final isRunning = await _service.isRunning();
+      if (!isRunning) {
+        await _service.startService();
+        _debugLog('8. startService() dipanggil');
+        // Beri waktu isolate background siap menerima listener.
+        await Future.delayed(const Duration(milliseconds: 800));
       }
 
       _service.invoke(ServiceCommand.startSession);
