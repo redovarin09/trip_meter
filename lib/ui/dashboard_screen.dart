@@ -84,29 +84,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// diberikan SEBELUM service jalan — sesuai requirement
   /// "Android Permissions Wajib ditangani secara runtime".
   Future<void> _handleStartSession() async {
-    final foreground = await AppPermissionHandler.requestForegroundLocation();
+    try {
+      _debugLog('1. Minta izin lokasi foreground...');
+      final foreground =
+          await AppPermissionHandler.requestForegroundLocation();
+      if (!mounted) return;
+      if (foreground != PermissionResult.granted) {
+        _showPermissionDeniedMessage('Lokasi');
+        return;
+      }
+      _debugLog('2. Lokasi foreground: GRANTED');
+
+      _debugLog('3. Minta izin lokasi background...');
+      final background =
+          await AppPermissionHandler.requestBackgroundLocation();
+      if (!mounted) return;
+      if (background != PermissionResult.granted) {
+        _showPermissionDeniedMessage('Lokasi Latar Belakang');
+        return;
+      }
+      _debugLog('4. Lokasi background: GRANTED');
+
+      _debugLog('5. Minta izin notifikasi...');
+      final notif =
+          await AppPermissionHandler.requestNotificationPermission();
+      if (!mounted) return;
+      _debugLog('6. Notifikasi: ${notif.name}');
+      if (notif != PermissionResult.granted) {
+        _showPermissionDeniedMessage('Notifikasi (WAJIB untuk cockpit!)');
+        return;
+      }
+
+      await AppPermissionHandler.requestIgnoreBatteryOptimization();
+      _debugLog('7. Battery optimization: diminta');
+
+      final isRunning = await _service.isRunning();
+      _debugLog('8. Service sudah jalan? $isRunning');
+
+      if (!isRunning) {
+        await _service.startService();
+        _debugLog('9. startService() dipanggil');
+        // Beri waktu isolate background siap menerima listener,
+        // mencegah race condition invoke() terlalu cepat.
+        await Future.delayed(const Duration(milliseconds: 800));
+      }
+
+      _service.invoke(ServiceCommand.startSession);
+      _debugLog('10. Command startSession DIKIRIM ✅');
+    } catch (e, stack) {
+      _debugLog('❌ ERROR: $e');
+      debugPrint('StackTrace: $stack');
+    }
+  }
+
+  /// Helper debug visual — tampilkan SnackBar singkat untuk
+  /// melacak progress tanpa perlu ADB. HAPUS setelah debugging selesai.
+  void _debugLog(String message) {
     if (!mounted) return;
-    if (foreground != PermissionResult.granted) {
-      _showPermissionDeniedMessage('Lokasi');
-      return;
-    }
-
-    final background = await AppPermissionHandler.requestBackgroundLocation();
-    if (!mounted) return;
-    if (background != PermissionResult.granted) {
-      _showPermissionDeniedMessage('Lokasi Latar Belakang');
-      return;
-    }
-
-    await AppPermissionHandler.requestNotificationPermission();
-    await AppPermissionHandler.requestIgnoreBatteryOptimization();
-
-    final isRunning = await _service.isRunning();
-    if (!isRunning) {
-      await _service.startService();
-    }
-
-    _service.invoke(ServiceCommand.startSession);
+    debugPrint('[TripMeter Debug] $message');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF1A1A1A),
+        duration: const Duration(milliseconds: 1200),
+        content: Text(
+          message,
+          style: const TextStyle(color: Color(0xFF00FF88), fontSize: 12),
+        ),
+      ),
+    );
   }
 
   void _handleFinishSession() {
