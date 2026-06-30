@@ -115,22 +115,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return;
       }
 
-      await AppPermissionHandler.requestIgnoreBatteryOptimization();
-      _debugLog('7. Battery optimization: diminta');
-
+      // PENTING: start service & invoke SEBELUM minta battery
+      // optimization exemption. Alasan: meminta exemption membuka
+      // halaman Settings sistem (terutama di MIUI/HyperOS), dan
+      // beberapa OEM mematikan proses app yang dianggap "idle di
+      // background" saat itu terjadi. Dengan service sudah berjalan
+      // (punya notification ongoing) SEBELUM redirect ke Settings,
+      // app jauh lebih kecil kemungkinan di-kill oleh OS.
       final isRunning = await _service.isRunning();
-      _debugLog('8. Service sudah jalan? $isRunning');
+      _debugLog('7. Service sudah jalan? $isRunning');
 
       if (!isRunning) {
         await _service.startService();
-        _debugLog('9. startService() dipanggil');
+        _debugLog('8. startService() dipanggil');
         // Beri waktu isolate background siap menerima listener,
         // mencegah race condition invoke() terlalu cepat.
         await Future.delayed(const Duration(milliseconds: 800));
       }
 
       _service.invoke(ServiceCommand.startSession);
-      _debugLog('10. Command startSession DIKIRIM ✅');
+      _debugLog('9. Command startSession DIKIRIM ✅');
+
+      // Battery optimization diminta PALING TERAKHIR — service
+      // sudah jalan & notifikasi cockpit sudah tampil di titik ini.
+      if (!mounted) return;
+      await AppPermissionHandler.requestIgnoreBatteryOptimization();
+      _debugLog('10. Battery optimization: diminta');
     } catch (e, stack) {
       _debugLog('❌ ERROR: $e');
       debugPrint('StackTrace: $stack');
