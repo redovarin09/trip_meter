@@ -10,6 +10,7 @@ import '../utils/permission_handler.dart';
 import 'widgets/metric_card.dart';
 import 'widgets/session_buttons.dart';
 import 'widgets/summary_dialog.dart';
+import '../utils/debug_logger.dart';
 
 /// Layar utama (single-page dashboard) — sesuai keputusan Step 1,
 /// ini HANYA layar rekap/dashboard, bukan layar kontrol trip.
@@ -148,8 +149,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// Helper debug visual — tampilkan SnackBar singkat untuk
   /// melacak progress tanpa perlu ADB. HAPUS setelah debugging selesai.
   void _debugLog(String message) {
-    if (!mounted) return;
     debugPrint('[TripMeter Debug] $message');
+    DebugLogger.log(message); // Tulis ke disk SEGERA, sebelum apapun
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         backgroundColor: const Color(0xFF1A1A1A),
@@ -158,6 +160,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
           message,
           style: const TextStyle(color: Color(0xFF00FF88), fontSize: 12),
         ),
+      ),
+    );
+  }
+
+  /// Tampilkan dialog berisi log sesi TERAKHIR — termasuk sesi yang
+  /// mungkin berakhir karena app di-kill paksa oleh OS. Ini pengganti
+  /// ADB logcat untuk debugging tanpa wireless pairing.
+  Future<void> _showDebugLogDialog() async {
+    final logs = await DebugLogger.getLogs();
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF0A0A0A),
+        title: const Text('Log Sesi Terakhir',
+            style: TextStyle(color: Colors.white, fontSize: 16)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Text(
+              logs.isEmpty ? '(kosong)' : logs.join('\n'),
+              style: const TextStyle(
+                  color: Color(0xFF00FF88),
+                  fontSize: 12,
+                  fontFamily: 'monospace'),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await DebugLogger.clear();
+              if (!mounted) return;
+              Navigator.of(context).pop();
+            },
+            child: const Text('Hapus & Tutup'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Tutup'),
+          ),
+        ],
       ),
     );
   }
@@ -239,6 +283,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 sessionState: _data.sessionState,
                 onStartSession: _handleStartSession,
                 onFinishSession: _handleFinishSession,
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: _showDebugLogDialog,
+                child: const Text(
+                  'Lihat Log Debug',
+                  style: TextStyle(color: Color(0xFF444444), fontSize: 11),
+                ),
               ),
             ],
           ),
