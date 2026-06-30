@@ -85,7 +85,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// "Android Permissions Wajib ditangani secara runtime".
   Future<void> _handleStartSession() async {
     try {
-      _debugLog('1. Minta izin lokasi foreground...');
+      // KRITIS: startService() dipanggil PALING PERTAMA, SEGERA
+      // setelah tap tombol — TANPA await dialog permission apapun
+      // sebelumnya. Alasan: Android (terutama MIUI/HyperOS) hanya
+      // memberi window waktu singkat setelah user-gesture untuk
+      // mengizinkan startForegroundService() dari konteks yang
+      // dianggap sah. Setiap dialog permission yang di-await
+      // berurutan menggerus window itu — begitu window habis,
+      // OS bisa langsung MEMATIKAN seluruh proses app tanpa
+      // exception yang bisa ditangkap try-catch. Maka service
+      // HARUS start duluan, baru permission diminta belakangan.
+      _debugLog('1. Memulai service...');
+      final isRunning = await _service.isRunning();
+      if (!isRunning) {
+        await _service.startService();
+        _debugLog('2. startService() dipanggil');
+      }
+
+      _debugLog('3. Minta izin lokasi foreground...');
       final foreground =
           await AppPermissionHandler.requestForegroundLocation();
       if (!mounted) return;
@@ -93,9 +110,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _showPermissionDeniedMessage('Lokasi');
         return;
       }
-      _debugLog('2. Lokasi foreground: GRANTED');
+      _debugLog('4. Lokasi foreground: GRANTED');
 
-      _debugLog('3. Minta izin lokasi background...');
+      _debugLog('5. Minta izin lokasi background...');
       final background =
           await AppPermissionHandler.requestBackgroundLocation();
       if (!mounted) return;
@@ -103,41 +120,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _showPermissionDeniedMessage('Lokasi Latar Belakang');
         return;
       }
-      _debugLog('4. Lokasi background: GRANTED');
+      _debugLog('6. Lokasi background: GRANTED');
 
-      _debugLog('5. Minta izin notifikasi...');
+      _debugLog('7. Minta izin notifikasi...');
       final notif =
           await AppPermissionHandler.requestNotificationPermission();
       if (!mounted) return;
-      _debugLog('6. Notifikasi: ${notif.name}');
+      _debugLog('8. Notifikasi: ${notif.name}');
       if (notif != PermissionResult.granted) {
         _showPermissionDeniedMessage('Notifikasi (WAJIB untuk cockpit!)');
         return;
       }
 
-      // PENTING: start service & invoke SEBELUM minta battery
-      // optimization exemption. Alasan: meminta exemption membuka
-      // halaman Settings sistem (terutama di MIUI/HyperOS), dan
-      // beberapa OEM mematikan proses app yang dianggap "idle di
-      // background" saat itu terjadi. Dengan service sudah berjalan
-      // (punya notification ongoing) SEBELUM redirect ke Settings,
-      // app jauh lebih kecil kemungkinan di-kill oleh OS.
-      final isRunning = await _service.isRunning();
-      _debugLog('7. Service sudah jalan? $isRunning');
-
-      if (!isRunning) {
-        await _service.startService();
-        _debugLog('8. startService() dipanggil');
-        // Beri waktu isolate background siap menerima listener,
-        // mencegah race condition invoke() terlalu cepat.
-        await Future.delayed(const Duration(milliseconds: 800));
-      }
-
       _service.invoke(ServiceCommand.startSession);
       _debugLog('9. Command startSession DIKIRIM ✅');
 
-      // Battery optimization diminta PALING TERAKHIR — service
-      // sudah jalan & notifikasi cockpit sudah tampil di titik ini.
+      // Battery optimization diminta PALING TERAKHIR.
       if (!mounted) return;
       await AppPermissionHandler.requestIgnoreBatteryOptimization();
       _debugLog('10. Battery optimization: diminta');
