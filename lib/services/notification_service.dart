@@ -1,8 +1,36 @@
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../models/app_state.dart';
 import '../models/trip_data.dart';
+import '../services/background_service.dart' show ServiceCommand;
 import '../utils/formatter.dart';
+
+/// Handler untuk notification action dengan showsUserInterface: false.
+/// WAJIB top-level function (bukan closure) + @pragma('vm:entry-point'),
+/// karena Android menjalankan ini di ISOLATE/Flutter Engine TERPISAH
+/// dari isolate background service utama. Kita instantiate
+/// FlutterBackgroundService() baru di sini — invoke() akan tetap
+/// nyambung ke service asli yang sedang berjalan lewat platform
+/// channel, bukan lewat referensi objek Dart langsung.
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse response) {
+  final actionId = response.actionId;
+  if (actionId == null) return;
+
+  final service = FlutterBackgroundService();
+  switch (actionId) {
+    case NotificationAction.startTrip:
+      service.invoke(ServiceCommand.startTrip);
+      break;
+    case NotificationAction.pauseTrip:
+      service.invoke(ServiceCommand.pauseTrip);
+      break;
+    case NotificationAction.finishTrip:
+      service.invoke(ServiceCommand.finishTrip);
+      break;
+  }
+}
 
 /// ID notifikasi HARUS SAMA dengan foregroundServiceNotificationId
 /// di background_service.dart — supaya notifikasi custom ini
@@ -48,6 +76,7 @@ class NotificationService {
           onAction(actionId);
         }
       },
+      onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
     );
   }
 
