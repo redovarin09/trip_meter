@@ -51,6 +51,10 @@ Future<void> initializeBackgroundService() async {
       foregroundServiceNotificationId: 888,
       initialNotificationTitle: 'Trip Meter',
       initialNotificationContent: 'Menyiapkan layanan...',
+      // WAJIB Android 14+: harus match dengan foregroundServiceType
+      // di AndroidManifest.xml, kalau tidak MissingForegroundServiceTypeException
+      // dilempar native saat startForeground() dipanggil.
+      foregroundServiceTypes: [AndroidForegroundType.location],
     ),
     iosConfiguration: IosConfiguration(),
   );
