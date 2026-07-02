@@ -4,6 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../models/app_state.dart';
 import '../models/trip_data.dart';
 import '../services/background_service.dart' show ServiceCommand;
+import '../utils/debug_logger.dart';
 import '../utils/formatter.dart';
 
 /// Handler untuk notification action dengan showsUserInterface: false.
@@ -15,18 +16,25 @@ import '../utils/formatter.dart';
 /// channel, bukan lewat referensi objek Dart langsung.
 @pragma('vm:entry-point')
 void notificationTapBackground(NotificationResponse response) {
+  DebugLogger.log('[NOTIF] Handler terpanggil, actionId: ${response.actionId}');
   final actionId = response.actionId;
-  if (actionId == null) return;
+  if (actionId == null) {
+    DebugLogger.log('[NOTIF] actionId NULL — berhenti');
+    return;
+  }
 
   final service = FlutterBackgroundService();
   switch (actionId) {
     case NotificationAction.startTrip:
+      DebugLogger.log('[NOTIF] Invoke startTrip...');
       service.invoke(ServiceCommand.startTrip);
       break;
     case NotificationAction.pauseTrip:
+      DebugLogger.log('[NOTIF] Invoke pauseTrip...');
       service.invoke(ServiceCommand.pauseTrip);
       break;
     case NotificationAction.finishTrip:
+      DebugLogger.log('[NOTIF] Invoke finishTrip...');
       service.invoke(ServiceCommand.finishTrip);
       break;
   }

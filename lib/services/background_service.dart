@@ -7,6 +7,7 @@ import '../models/app_state.dart';
 import '../models/trip_data.dart';
 import 'gps_service.dart';
 import 'notification_service.dart';
+import '../utils/debug_logger.dart';
 
 /// Command yang bisa dikirim dari UI (Dashboard) atau Notification
 /// Panel ke background service. Nama harus persis sama dengan yang
@@ -163,8 +164,15 @@ void _onServiceStart(ServiceInstance service) async {
   });
 
   service.on(ServiceCommand.startTrip).listen((_) {
-    if (!tripData.sessionState.isActive) return;
-    if (tripData.tripState.isRunning) return;
+    DebugLogger.log('[SERVICE] startTrip command diterima');
+    if (!tripData.sessionState.isActive) {
+      DebugLogger.log('[SERVICE] startTrip DITOLAK: sesi belum aktif');
+      return;
+    }
+    if (tripData.tripState.isRunning) {
+      DebugLogger.log('[SERVICE] startTrip DITOLAK: sudah running');
+      return;
+    }
 
     final isResuming = tripData.tripState.isPaused;
 
