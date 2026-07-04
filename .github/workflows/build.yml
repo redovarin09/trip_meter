@@ -41,7 +41,7 @@ jobs:
       - name: Dump Merged AndroidManifest
         run: |
           echo "=== Mencari merged manifest ==="
-          find android/app/build -iname "AndroidManifest.xml" -path "*merged*" 2>/dev/null
+          find android/app/build -iname "AndroidManifest.xml" -path "*merged*" 2>/dev/null || true
           echo "=== Isi merged manifest (debug variant) ==="
           MANIFEST=$(find android/app/build -iname "AndroidManifest.xml" -path "*merged*debug*" 2>/dev/null | head -n 1)
           if [ -z "$MANIFEST" ]; then
