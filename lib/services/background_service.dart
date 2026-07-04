@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:ui';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -66,7 +68,8 @@ Future<void> initializeBackgroundService() async {
 /// dari lifecycle widget Flutter biasa.
 @pragma('vm:entry-point')
 void _onServiceStart(ServiceInstance service) async {
-  // ═══ STATE LOKAL ISOLATE INI ═══
+  DartPluginRegistrant.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
   DebugLogger.log('[SERVICE] Isolate service START — _onServiceStart terpanggil.');
   TripData tripData = const TripData();
   DateTime? lastPositionTimestamp;
