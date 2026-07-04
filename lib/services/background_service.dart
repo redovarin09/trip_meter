@@ -67,6 +67,7 @@ Future<void> initializeBackgroundService() async {
 @pragma('vm:entry-point')
 void _onServiceStart(ServiceInstance service) async {
   // ═══ STATE LOKAL ISOLATE INI ═══
+  DebugLogger.log('[SERVICE] Isolate service START — _onServiceStart terpanggil.');
   TripData tripData = const TripData();
   DateTime? lastPositionTimestamp;
   StreamSubscription<Position>? positionSubscription;
@@ -138,6 +139,7 @@ void _onServiceStart(ServiceInstance service) async {
   // ═══ COMMAND HANDLERS ═══
 
   service.on(ServiceCommand.startSession).listen((_) {
+    DebugLogger.log('[SERVICE] startSession command diterima.');
     if (tripData.sessionState.isActive) return;
 
     tripData = tripData.copyWith(
@@ -151,6 +153,7 @@ void _onServiceStart(ServiceInstance service) async {
   });
 
   service.on(ServiceCommand.finishSession).listen((_) {
+    DebugLogger.log('[SERVICE] finishSession command diterima.');
     if (!tripData.sessionState.isActive) return;
 
     stopGpsTracking();
@@ -188,6 +191,7 @@ void _onServiceStart(ServiceInstance service) async {
   });
 
   service.on(ServiceCommand.pauseTrip).listen((_) {
+    DebugLogger.log('[SERVICE] pauseTrip command diterima.');
     if (!tripData.tripState.isRunning) return;
 
     tripData = tripData.copyWith(tripState: TripState.paused);
@@ -196,6 +200,7 @@ void _onServiceStart(ServiceInstance service) async {
   });
 
   service.on(ServiceCommand.finishTrip).listen((_) {
+    DebugLogger.log('[SERVICE] finishTrip command diterima.');
     if (tripData.tripState.isIdle) return;
 
     // Kirim snapshot SEBELUM direset, untuk Dialog Summary FINISH TRIP.
