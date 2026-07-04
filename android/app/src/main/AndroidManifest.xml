@@ -53,7 +53,7 @@
 
         <!-- ═══ WAJIB untuk notification action buttons ═══ -->
         <!-- Tanpa ini, tombol aksi notifikasi (MULAI TRIP, PAUSE, dst) -->
-        <!-- tidak akan pernah memicu callback apa pun -- sejak v16, -->
+        <!-- tidak akan pernah memicu callback apa pun. Sejak v16, -->
         <!-- flutter_local_notifications tidak lagi auto-inject receiver ini. -->
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver"
