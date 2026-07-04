@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -172,52 +171,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// ADB logcat untuk debugging tanpa wireless pairing.
   Future<void> _showDebugLogDialog() async {
     final logs = await DebugLogger.getLogs();
-    String canaryStatus;
-    try {
-      final canary = File('/data/data/com.tripmeter.trip_meter/app_flutter/isolate_canary.txt');
-      canaryStatus = canary.existsSync()
-          ? '[CANARY 1] FILE ADA: ${canary.readAsStringSync()}'
-          : '[CANARY 1] TIDAK ADA -- isolate belum pernah menulis apa pun.';
-    } catch (e) {
-      canaryStatus = '[CANARY 1] ERROR baca file: $e';
-    }
-    String canary2Status;
-    try {
-      final c2 = File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_2_after_plugin_registrant.txt');
-      canary2Status = c2.existsSync()
-          ? '[CANARY 2] FILE ADA: ${c2.readAsStringSync()}'
-          : '[CANARY 2] TIDAK ADA -- berhenti sebelum/di DartPluginRegistrant.';
-    } catch (e) {
-      canary2Status = '[CANARY 2] ERROR baca file: $e';
-    }
-    String canary3Status;
-    try {
-      final c3 = File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_3_after_widgets_binding.txt');
-      canary3Status = c3.existsSync()
-          ? '[CANARY 3] FILE ADA: ${c3.readAsStringSync()}'
-          : '[CANARY 3] TIDAK ADA -- berhenti sebelum/di WidgetsFlutterBinding.';
-    } catch (e) {
-      canary3Status = '[CANARY 3] ERROR baca file: $e';
-    }
-    String canary4Status;
-    try {
-      final c4 = File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_4_after_debuglogger_call.txt');
-      canary4Status = c4.existsSync()
-          ? '[CANARY 4] FILE ADA: ${c4.readAsStringSync()}'
-          : '[CANARY 4] TIDAK ADA -- DebugLogger.log() masih menggantung (hang).';
-    } catch (e) {
-      canary4Status = '[CANARY 4] ERROR baca file: $e';
-    }
-    String errorStatus;
-    try {
-      final errFile = File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_error_debuglogger.txt');
-      errorStatus = errFile.existsSync()
-          ? '[ERROR CATCHER] ${errFile.readAsStringSync()}'
-          : '[ERROR CATCHER] TIDAK ADA -- tidak ada exception tertangkap.';
-    } catch (e) {
-      errorStatus = '[ERROR CATCHER] ERROR baca file: $e';
-    }
-    final displayLogs = [canaryStatus, canary2Status, canary3Status, canary4Status, errorStatus, ...logs];
+    final displayLogs = logs;
     if (!mounted) return;
     showDialog(
       context: context,
