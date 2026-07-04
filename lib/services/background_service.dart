@@ -76,7 +76,15 @@ void _onServiceStart(ServiceInstance service) async {
     // sengaja diam -- ini cuma test independen dari plugin
   }
   DartPluginRegistrant.ensureInitialized();
+  try {
+    File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_2_after_plugin_registrant.txt')
+        .writeAsStringSync('OK at ${DateTime.now()}');
+  } catch (e) { /* diam sengaja */ }
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_3_after_widgets_binding.txt')
+        .writeAsStringSync('OK at ${DateTime.now()}');
+  } catch (e) { /* diam sengaja */ }
   DebugLogger.log('[SERVICE] Isolate service START — _onServiceStart terpanggil.');
   TripData tripData = const TripData();
   DateTime? lastPositionTimestamp;
