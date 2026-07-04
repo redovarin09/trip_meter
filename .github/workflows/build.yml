@@ -40,18 +40,18 @@ jobs:
 
       - name: Dump Merged AndroidManifest
         run: |
-          echo "=== Mencari merged manifest ==="
-          find android/app/build -iname "AndroidManifest.xml" -path "*merged*" 2>/dev/null || true
+          echo "=== Semua AndroidManifest.xml di build/ ==="
+          find build -iname "AndroidManifest.xml" 2>/dev/null || true
           echo "=== Isi merged manifest (debug variant) ==="
-          MANIFEST=$(find android/app/build -iname "AndroidManifest.xml" -path "*merged*debug*" 2>/dev/null | head -n 1)
+          MANIFEST=$(find build -iname "AndroidManifest.xml" -path "*debug*" 2>/dev/null | head -n 1)
           if [ -z "$MANIFEST" ]; then
-            MANIFEST=$(find android/app/build -iname "AndroidManifest.xml" -path "*merged*" 2>/dev/null | head -n 1)
+            MANIFEST=$(find build -iname "AndroidManifest.xml" 2>/dev/null | head -n 1)
           fi
           if [ -n "$MANIFEST" ]; then
             echo "File ditemukan: $MANIFEST"
             cat "$MANIFEST"
           else
-            echo "TIDAK DITEMUKAN manifest hasil merge."
+            echo "TIDAK DITEMUKAN manifest hasil merge sama sekali."
           fi
 
       - name: Upload APK artifact
