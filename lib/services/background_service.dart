@@ -155,7 +155,7 @@ void _onServiceStart(ServiceInstance service) async {
     broadcastUpdate();
   });
 
-  service.on(ServiceCommand.finishSession).listen((_) {
+  service.on(ServiceCommand.finishSession).listen((_) async {
     DebugLogger.log('[SERVICE] finishSession command diterima.');
     if (!tripData.sessionState.isActive) return;
 
@@ -167,6 +167,14 @@ void _onServiceStart(ServiceInstance service) async {
     tripData = tripData.resetSession();
     lastPositionTimestamp = null;
     broadcastUpdate();
+
+    // WAJIB: hentikan foreground service sepenuhnya. Tanpa ini,
+    // Android akan terus memaksa notifikasi bawaan service muncul
+    // ulang (ID sama dengan notifikasi custom kita), karena OS
+    // mewajibkan foreground service selalu punya notifikasi aktif.
+    await Future.delayed(const Duration(milliseconds: 300));
+    DebugLogger.log('[SERVICE] stopSelf() dipanggil -- service dihentikan.');
+    service.stopSelf();
   });
 
   service.on(ServiceCommand.startTrip).listen((_) {
