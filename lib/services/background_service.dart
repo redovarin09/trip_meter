@@ -85,7 +85,16 @@ void _onServiceStart(ServiceInstance service) async {
     File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_3_after_widgets_binding.txt')
         .writeAsStringSync('OK at ${DateTime.now()}');
   } catch (e) { /* diam sengaja */ }
-  DebugLogger.log('[SERVICE] Isolate service START — _onServiceStart terpanggil.');
+  DebugLogger.log('[SERVICE] Isolate service START — _onServiceStart terpanggil.').catchError((e) {
+    try {
+      File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_error_debuglogger.txt')
+          .writeAsStringSync('DebugLogger.log ERROR: $e');
+    } catch (_) {}
+  });
+  try {
+    File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_4_after_debuglogger_call.txt')
+        .writeAsStringSync('OK at ${DateTime.now()}');
+  } catch (e) {}
   TripData tripData = const TripData();
   DateTime? lastPositionTimestamp;
   StreamSubscription<Position>? positionSubscription;

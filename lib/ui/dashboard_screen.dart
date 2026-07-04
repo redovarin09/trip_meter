@@ -199,7 +199,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } catch (e) {
       canary3Status = '[CANARY 3] ERROR baca file: $e';
     }
-    final displayLogs = [canaryStatus, canary2Status, canary3Status, ...logs];
+    String canary4Status;
+    try {
+      final c4 = File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_4_after_debuglogger_call.txt');
+      canary4Status = c4.existsSync()
+          ? '[CANARY 4] FILE ADA: ${c4.readAsStringSync()}'
+          : '[CANARY 4] TIDAK ADA -- DebugLogger.log() masih menggantung (hang).';
+    } catch (e) {
+      canary4Status = '[CANARY 4] ERROR baca file: $e';
+    }
+    String errorStatus;
+    try {
+      final errFile = File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_error_debuglogger.txt');
+      errorStatus = errFile.existsSync()
+          ? '[ERROR CATCHER] ${errFile.readAsStringSync()}'
+          : '[ERROR CATCHER] TIDAK ADA -- tidak ada exception tertangkap.';
+    } catch (e) {
+      errorStatus = '[ERROR CATCHER] ERROR baca file: $e';
+    }
+    final displayLogs = [canaryStatus, canary2Status, canary3Status, canary4Status, errorStatus, ...logs];
     if (!mounted) return;
     showDialog(
       context: context,
