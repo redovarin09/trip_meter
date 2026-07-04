@@ -1,37 +1,59 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 
 /// Logger debug yang menyimpan setiap langkah ke penyimpanan
-/// PERSISTEN (bukan hanya memori). Jika app di-kill paksa oleh OS
-/// di tengah proses, log sampai langkah terakhir tetap tersimpan
-/// dan bisa dibaca begitu app dibuka kembali — solusi pengganti
-/// ADB logcat saat wireless pairing tidak reliable.
+/// PERSISTEN (bukan hanya memori), memakai dart:io File murni --
+/// TIDAK memakai SharedPreferences karena plugin method channel
+/// terbukti hang/tidak pernah direspons di isolate headless milik
+/// flutter_background_service. File I/O adalah operasi VM murni,
+/// tidak lewat platform channel, sehingga reliable di isolate manapun.
 class DebugLogger {
   DebugLogger._();
 
-  static const String _key = 'debug_log_session';
+  static const String _fileName =
+      '/data/data/com.tripmeter.trip_meter/app_flutter/debug_log.txt';
 
-  /// Tambah satu baris log. Dipanggil synchronous-style (fire and
-  /// forget) tapi SharedPreferences menulis ke disk segera di balik
-  /// layar, jauh lebih cepat dari kemungkinan app di-kill OS.
+  static File get _file => File(_fileName);
+
+  /// Tambah satu baris log. Sepenuhnya synchronous di level OS
+  /// (writeAsStringSync dengan mode append) -- tidak ada await
+  /// yang bisa menggantung.
   static Future<void> log(String message) async {
-    final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getStringList(_key) ?? [];
-    final timestamp = DateTime.now().toIso8601String().substring(11, 23);
-    existing.add('[$timestamp] $message');
-    await prefs.setStringList(_key, existing);
+    try {
+      final timestamp = DateTime.now().toIso8601String().substring(11, 23);
+      _file.writeAsStringSync(
+        '[$timestamp] $message\n',
+        mode: FileMode.append,
+        flush: true,
+      );
+    } catch (_) {
+      // sengaja diam -- logger tidak boleh menyebabkan crash aplikasi
+    }
   }
 
   /// Ambil semua log dari sesi terakhir (termasuk sesi yang
   /// kemungkinan berakhir karena app di-kill paksa).
   static Future<List<String>> getLogs() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(_key) ?? [];
+    try {
+      if (!_file.existsSync()) return [];
+      final content = _file.readAsStringSync();
+      return content
+          .split('\n')
+          .where((line) => line.trim().isNotEmpty)
+          .toList();
+    } catch (_) {
+      return [];
+    }
   }
 
-  /// Bersihkan log — panggil saat mulai sesi debug baru supaya
+  /// Bersihkan log -- panggil saat mulai sesi debug baru supaya
   /// tidak campur dengan log percobaan sebelumnya.
   static Future<void> clear() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_key);
+    try {
+      if (_file.existsSync()) {
+        _file.deleteSync();
+      }
+    } catch (_) {
+      // sengaja diam
+    }
   }
 }
