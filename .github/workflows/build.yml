@@ -38,6 +38,22 @@ jobs:
         timeout-minutes: 15
         run: flutter build apk --debug
 
+      - name: Dump Merged AndroidManifest
+        run: |
+          echo "=== Mencari merged manifest ==="
+          find android/app/build -iname "AndroidManifest.xml" -path "*merged*" 2>/dev/null
+          echo "=== Isi merged manifest (debug variant) ==="
+          MANIFEST=$(find android/app/build -iname "AndroidManifest.xml" -path "*merged*debug*" 2>/dev/null | head -n 1)
+          if [ -z "$MANIFEST" ]; then
+            MANIFEST=$(find android/app/build -iname "AndroidManifest.xml" -path "*merged*" 2>/dev/null | head -n 1)
+          fi
+          if [ -n "$MANIFEST" ]; then
+            echo "File ditemukan: $MANIFEST"
+            cat "$MANIFEST"
+          else
+            echo "TIDAK DITEMUKAN manifest hasil merge."
+          fi
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
