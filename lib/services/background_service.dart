@@ -94,7 +94,7 @@ void _onServiceStart(ServiceInstance service) async {
   try {
     File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_4_after_debuglogger_call.txt')
         .writeAsStringSync('OK at ${DateTime.now()}');
-  } catch (e) {}
+  } catch (e) { /* diam sengaja */ }
   TripData tripData = const TripData();
   DateTime? lastPositionTimestamp;
   StreamSubscription<Position>? positionSubscription;
