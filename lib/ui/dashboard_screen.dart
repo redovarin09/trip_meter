@@ -176,12 +176,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final canary = File('/data/data/com.tripmeter.trip_meter/app_flutter/isolate_canary.txt');
       canaryStatus = canary.existsSync()
-          ? '[CANARY] FILE ADA: ${canary.readAsStringSync()}'
-          : '[CANARY] FILE TIDAK ADA -- isolate service belum pernah menulis apa pun.';
+          ? '[CANARY 1] FILE ADA: ${canary.readAsStringSync()}'
+          : '[CANARY 1] TIDAK ADA -- isolate belum pernah menulis apa pun.';
     } catch (e) {
-      canaryStatus = '[CANARY] ERROR baca file: $e';
+      canaryStatus = '[CANARY 1] ERROR baca file: $e';
     }
-    final displayLogs = [canaryStatus, ...logs];
+    String canary2Status;
+    try {
+      final c2 = File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_2_after_plugin_registrant.txt');
+      canary2Status = c2.existsSync()
+          ? '[CANARY 2] FILE ADA: ${c2.readAsStringSync()}'
+          : '[CANARY 2] TIDAK ADA -- berhenti sebelum/di DartPluginRegistrant.';
+    } catch (e) {
+      canary2Status = '[CANARY 2] ERROR baca file: $e';
+    }
+    String canary3Status;
+    try {
+      final c3 = File('/data/data/com.tripmeter.trip_meter/app_flutter/canary_3_after_widgets_binding.txt');
+      canary3Status = c3.existsSync()
+          ? '[CANARY 3] FILE ADA: ${c3.readAsStringSync()}'
+          : '[CANARY 3] TIDAK ADA -- berhenti sebelum/di WidgetsFlutterBinding.';
+    } catch (e) {
+      canary3Status = '[CANARY 3] ERROR baca file: $e';
+    }
+    final displayLogs = [canaryStatus, canary2Status, canary3Status, ...logs];
     if (!mounted) return;
     showDialog(
       context: context,
