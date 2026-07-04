@@ -43,9 +43,12 @@ jobs:
           echo "=== Semua AndroidManifest.xml di build/ ==="
           find build -iname "AndroidManifest.xml" 2>/dev/null || true
           echo "=== Isi merged manifest (debug variant) ==="
-          MANIFEST=$(find build -iname "AndroidManifest.xml" -path "*debug*" 2>/dev/null | head -n 1)
+          MANIFEST=$(find build/app/intermediates/merged_manifest -iname "AndroidManifest.xml" -path "*debug*" 2>/dev/null | head -n 1)
           if [ -z "$MANIFEST" ]; then
-            MANIFEST=$(find build -iname "AndroidManifest.xml" 2>/dev/null | head -n 1)
+            MANIFEST=$(find build/app/intermediates/packaged_manifests -iname "AndroidManifest.xml" -path "*debug*" 2>/dev/null | head -n 1)
+          fi
+          if [ -z "$MANIFEST" ]; then
+            MANIFEST=$(find build/app -iname "AndroidManifest.xml" -path "*debug*" 2>/dev/null | head -n 1)
           fi
           if [ -n "$MANIFEST" ]; then
             echo "File ditemukan: $MANIFEST"
