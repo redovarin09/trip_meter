@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:async';
 import 'dart:ui';
 
@@ -68,6 +69,12 @@ Future<void> initializeBackgroundService() async {
 /// dari lifecycle widget Flutter biasa.
 @pragma('vm:entry-point')
 void _onServiceStart(ServiceInstance service) async {
+  try {
+    final canary = File('/data/data/com.tripmeter.trip_meter/app_flutter/isolate_canary.txt');
+    await canary.writeAsString('ISOLATE ALIVE at ${DateTime.now()}');
+  } catch (e) {
+    // sengaja diam -- ini cuma test independen dari plugin
+  }
   DartPluginRegistrant.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
   DebugLogger.log('[SERVICE] Isolate service START — _onServiceStart terpanggil.');

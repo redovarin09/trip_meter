@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -171,6 +172,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   /// ADB logcat untuk debugging tanpa wireless pairing.
   Future<void> _showDebugLogDialog() async {
     final logs = await DebugLogger.getLogs();
+    String canaryStatus;
+    try {
+      final canary = File('/data/data/com.tripmeter.trip_meter/app_flutter/isolate_canary.txt');
+      canaryStatus = canary.existsSync()
+          ? '[CANARY] FILE ADA: ${canary.readAsStringSync()}'
+          : '[CANARY] FILE TIDAK ADA -- isolate service belum pernah menulis apa pun.';
+    } catch (e) {
+      canaryStatus = '[CANARY] ERROR baca file: $e';
+    }
+    final displayLogs = [canaryStatus, ...logs];
     if (!mounted) return;
     showDialog(
       context: context,
@@ -182,7 +193,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           width: double.maxFinite,
           child: SingleChildScrollView(
             child: Text(
-              logs.isEmpty ? '(kosong)' : logs.join('\n'),
+              displayLogs.join('\n'),
               style: const TextStyle(
                   color: Color(0xFF00FF88),
                   fontSize: 12,
