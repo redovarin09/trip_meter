@@ -13,6 +13,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Decode Keystore & Generate key.properties
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/keystore.jks
+          cat > android/key.properties << EOF
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=app/keystore.jks
+          EOF
+          echo "Keystore & key.properties berhasil dibuat dari GitHub Secrets."
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -37,6 +53,17 @@ jobs:
       - name: Build Debug APK
         timeout-minutes: 15
         run: flutter build apk --debug
+
+      - name: Build Release APK
+        timeout-minutes: 15
+        run: flutter build apk --release
+
+      - name: Upload Release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trip-meter-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
 
       - name: Dump Merged AndroidManifest
         run: |
