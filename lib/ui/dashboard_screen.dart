@@ -12,6 +12,7 @@ import 'widgets/session_buttons.dart';
 import 'widgets/summary_dialog.dart';
 import '../utils/debug_logger.dart';
 import 'history_screen.dart';
+import 'settings_screen.dart';
 
 /// Layar utama (single-page dashboard) — sesuai keputusan Step 1,
 /// ini HANYA layar rekap/dashboard, bukan layar kontrol trip.
@@ -330,6 +331,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const HistoryScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings, color: Color(0xFF00FF88), size: 20),
+            tooltip: 'Pengaturan',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
               );
             },
           ),
