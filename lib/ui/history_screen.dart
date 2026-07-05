@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/session_record.dart';
+import '../services/export_service.dart';
 import '../services/history_service.dart';
 import '../utils/formatter.dart';
 
@@ -31,7 +32,35 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Riwayat Harian')),
+      appBar: AppBar(
+        title: const Text('Riwayat Harian'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share),
+            tooltip: 'Export CSV',
+            onPressed: () async {
+              final records = await _future;
+              if (records.isEmpty) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Belum ada riwayat untuk diekspor.')),
+                  );
+                }
+                return;
+              }
+              try {
+                await ExportService.exportAndShare(records);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Gagal export: \$e')),
+                  );
+                }
+              }
+            },
+          ),
+        ],
+      ),
       body: FutureBuilder<List<SessionRecord>>(
         future: _future,
         builder: (context, snapshot) {
