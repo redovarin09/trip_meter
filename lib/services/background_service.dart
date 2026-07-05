@@ -10,6 +10,8 @@ import '../models/trip_data.dart';
 import 'gps_service.dart';
 import 'notification_service.dart';
 import '../utils/debug_logger.dart';
+import '../models/session_record.dart';
+import 'history_service.dart';
 
 /// Command yang bisa dikirim dari UI (Dashboard) atau Notification
 /// Panel ke background service. Nama harus persis sama dengan yang
@@ -163,6 +165,18 @@ void _onServiceStart(ServiceInstance service) async {
 
     // Kirim snapshot SEBELUM direset, untuk Dialog Summary FINISH SESI.
     service.invoke(ServiceEvent.sessionFinished, tripData.toJson());
+
+    // Simpan ke riwayat SEBELUM direset -- hanya jika sesi punya
+    // waktu mulai yang valid (jaga-jaga null safety).
+    if (tripData.sessionStartTime != null) {
+      HistoryService.append(SessionRecord(
+        sessionStartTime: tripData.sessionStartTime!,
+        sessionEndTime: DateTime.now(),
+        totalKmHarian: tripData.totalKmHarian,
+        deadMileage: tripData.deadMileage,
+        tripCount: tripData.tripCount,
+      ));
+    }
 
     tripData = tripData.resetSession();
     lastPositionTimestamp = null;
