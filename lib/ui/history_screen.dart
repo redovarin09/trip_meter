@@ -95,13 +95,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 }
 
-class _SessionRecordCard extends StatelessWidget {
+class _SessionRecordCard extends StatefulWidget {
   final SessionRecord record;
 
   const _SessionRecordCard({required this.record});
 
   @override
+  State<_SessionRecordCard> createState() => _SessionRecordCardState();
+}
+
+class _SessionRecordCardState extends State<_SessionRecordCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final record = widget.record;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       color: const Color(0xFF0A0A0A),
@@ -151,6 +159,48 @@ class _SessionRecordCard extends StatelessWidget {
               'Efisiensi: ${record.efficiencyPercent.toStringAsFixed(0)}%',
               style: const TextStyle(color: Color(0xFF00FF88), fontSize: 13),
             ),
+            if (record.trips.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              InkWell(
+                onTap: () => setState(() => _expanded = !_expanded),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Detail Trip (${record.trips.length})',
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    Icon(
+                      _expanded ? Icons.expand_less : Icons.expand_more,
+                      color: Colors.grey,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ),
+              if (_expanded) ...[
+                const Divider(color: Color(0xFF222222), height: 16),
+                ...List.generate(record.trips.length, (i) {
+                  final trip = record.trips[i];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Trip ${i + 1} · ${Formatter.timeOfDay(trip.tripStartTime)}',
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                        Text(
+                          '${Formatter.kmWithUnit(trip.kmTrip)} · ${Formatter.durationShort(trip.duration)}',
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ],
           ],
         ),
       ),

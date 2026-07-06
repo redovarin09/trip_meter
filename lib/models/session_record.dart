@@ -1,3 +1,5 @@
+import 'trip_record.dart';
+
 /// Satu baris riwayat sesi kerja yang sudah selesai (FINISH SESI).
 /// Disimpan sebagai JSON-line di HistoryService -- immutable,
 /// dibuat sekali saat sesi selesai, tidak pernah diubah lagi.
@@ -18,12 +20,18 @@ class SessionRecord {
   /// Jumlah trip yang berhasil diselesaikan dalam sesi ini.
   final int tripCount;
 
+  /// Rincian tiap trip individual dalam sesi ini. Default kosong
+  /// untuk backward-compatibility dengan data riwayat lama yang
+  /// belum punya field ini.
+  final List<TripRecord> trips;
+
   const SessionRecord({
     required this.sessionStartTime,
     required this.sessionEndTime,
     required this.totalKmHarian,
     required this.deadMileage,
     required this.tripCount,
+    this.trips = const [],
   });
 
   /// Durasi sesi kerja, dari mulai sampai selesai.
@@ -45,6 +53,7 @@ class SessionRecord {
         'totalKmHarian': totalKmHarian,
         'deadMileage': deadMileage,
         'tripCount': tripCount,
+        'trips': trips.map((t) => t.toJson()).toList(),
       };
 
   factory SessionRecord.fromJson(Map<String, dynamic> json) {
@@ -54,6 +63,11 @@ class SessionRecord {
       totalKmHarian: (json['totalKmHarian'] as num).toDouble(),
       deadMileage: (json['deadMileage'] as num).toDouble(),
       tripCount: json['tripCount'] as int,
+      trips: json['trips'] == null
+          ? const []
+          : (json['trips'] as List)
+              .map((t) => TripRecord.fromJson(t as Map<String, dynamic>))
+              .toList(),
     );
   }
 }

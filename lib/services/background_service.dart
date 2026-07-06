@@ -11,6 +11,7 @@ import 'gps_service.dart';
 import 'notification_service.dart';
 import '../utils/debug_logger.dart';
 import '../models/session_record.dart';
+import '../models/trip_record.dart';
 import 'history_service.dart';
 
 /// Command yang bisa dikirim dari UI (Dashboard) atau Notification
@@ -74,6 +75,7 @@ void _onServiceStart(ServiceInstance service) async {
   WidgetsFlutterBinding.ensureInitialized();
   DebugLogger.log('[SERVICE] Isolate service START — _onServiceStart terpanggil.');
   TripData tripData = const TripData();
+  final List<TripRecord> completedTrips = [];
   DateTime? lastPositionTimestamp;
   StreamSubscription<Position>? positionSubscription;
 
@@ -147,6 +149,7 @@ void _onServiceStart(ServiceInstance service) async {
     DebugLogger.log('[SERVICE] startSession command diterima.');
     if (tripData.sessionState.isActive) return;
 
+    completedTrips.clear();
     tripData = tripData.copyWith(
       sessionState: SessionState.active,
       tripState: TripState.idle,
@@ -230,6 +233,16 @@ void _onServiceStart(ServiceInstance service) async {
 
     // Kirim snapshot SEBELUM direset, untuk Dialog Summary FINISH TRIP.
     service.invoke(ServiceEvent.tripFinished, tripData.toJson());
+
+    // Catat trip ini ke daftar sementara -- akan disertakan penuh
+    // ke SessionRecord saat FINISH SESI.
+    if (tripData.tripStartTime != null) {
+      completedTrips.add(TripRecord(
+        tripStartTime: tripData.tripStartTime!,
+        tripEndTime: DateTime.now(),
+        kmTrip: tripData.kmTripAktif,
+      ));
+    }
 
     tripData = tripData.resetTrip();
 
