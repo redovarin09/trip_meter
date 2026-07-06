@@ -178,8 +178,10 @@ void _onServiceStart(ServiceInstance service) async {
         totalKmHarian: tripData.totalKmHarian,
         deadMileage: tripData.deadMileage,
         tripCount: tripData.tripCount,
+        trips: List.unmodifiable(completedTrips),
       ));
     }
+    completedTrips.clear();
 
     tripData = tripData.resetSession();
     lastPositionTimestamp = null;
